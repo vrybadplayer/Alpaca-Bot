@@ -75,8 +75,13 @@ def main():
         critic = container.get_critic_auditor()
         print("   ✓ Critic Auditor initialized")
 
+        # Initialize Risk Manager (System 3)
+        print("\n8. Initializing Risk Manager (System 3)...")
+        risk_manager = container.get_risk_manager()
+        print("   ✓ Risk Manager initialized")
+
         # Get Tool Registry
-        print("\n8. Getting Tool Registry...")
+        print("\n9. Getting Tool Registry...")
         tool_registry = container.get_tool_registry()
         tools = tool_registry.list_tools()
         print(f"   ✓ Tool registry ready with {len(tools)} tools")
@@ -89,14 +94,14 @@ def main():
                 categories[cat] = []
             categories[cat].append(tool)
 
-        print("\n9. Tool Summary:")
+        print("\n10. Tool Summary:")
         for category, tool_list in categories.items():
             print(f"   {category.upper()} TOOLS ({len(tool_list)}):")
             for tool in tool_list:
                 print(f"     - {tool['name']}: {tool['description']}")
 
         # Demonstrate a few key tools
-        print("\n10. Demonstrating key tools...")
+        print("\n11. Demonstrating key tools...")
 
         # Get account info
         result = tool_registry.execute_tool('alpaca.get_account_info')
@@ -125,6 +130,46 @@ def main():
             else:
                 print("   ℹ No signal generated (holding)")
 
+        # Check the signal with the Risk Manager
+        if signal:
+            # We need the current price for the risk check
+            quote_result = tool_registry.execute_tool('alpaca.get_latest_quote', 'NVDA')
+            if quote_result['status'] == 'success':
+                current_price = (quote_result['result'].get('bid_price', 0) + quote_result['result'].get('ask_price', 0)) / 2
+                # Alternatively, we can use the last price or the close from market data, but for simplicity, we use the mid of bid/ask.
+                # However, note that the signal already has a target_price, stop_loss, and take_profit.
+                # We'll use the current price as the mid of bid/ask for the risk check.
+                risk_check_result = tool_registry.execute_tool('risk.check_trade_signal', signal, current_price)
+                if risk_check_result['status'] == 'success':
+                    risk_check = risk_check_result['result']
+                    print(f"   ✓ Risk Check: Approved={risk_check.get('approved')}, Violations={risk_check.get('violations')}, Adjusted Quantity={risk_check.get('adjusted_quantity')}")
+                    print(f"       Reason: {risk_check.get('reason')}")
+                else:
+                    print(f"   ❌ Risk Check failed: {risk_check_result.get('error')}")
+            else:
+                print("   ❌ Could not get current price for risk check")
+        else:
+            print("   ℹ Skipping risk check because no signal was generated")
+
+        # Assess risk with LLM (using the finance-investment-researcher persona) if we have a signal
+        if signal:
+            quote_result = tool_registry.execute_tool('alpaca.get_latest_quote', 'NVDA')
+            if quote_result['status'] == 'success':
+                current_price = (quote_result['result'].get('bid_price', 0) + quote_result['result'].get('ask_price', 0)) / 2
+                # We can also fetch some market data for context, but for simplicity, we'll just use the current price.
+                risk_assessment_result = tool_registry.execute_tool('risk.assess_risk_with_llm', signal, current_price)
+                if risk_assessment_result['status'] == 'success':
+                    risk_assessment = risk_assessment_result['result']
+                    print(f"   ✓ LLM Risk Assessment: Recommendation={risk_assessment.get('recommendation')}, Risk Level={risk_assessment.get('risk_level')}")
+                    print(f"       Key Risk Factors: {risk_assessment.get('key_risk_factors')}")
+                    print(f"       Suggested Adjustments: {risk_assessment.get('suggested_adjustments')}")
+                else:
+                    print(f"   ❌ LLM Risk Assessment failed: {risk_assessment_result.get('error')}")
+            else:
+                print("   ❌ Could not get current price for LLM risk assessment")
+        else:
+            print("   ℹ Skipping LLM risk assessment because no signal was generated")
+
         # Scan for shark activity
         result = tool_registry.execute_tool('alpaca.scan_shark_activity', 'NVDA', lookback_minutes=15)
         if result['status'] == 'success':
@@ -141,6 +186,7 @@ def main():
             'broker': broker,
             'worker': worker,
             'critic': critic,
+            'risk_manager': risk_manager,
             'tool_registry': tool_registry,
             'llm_client': llm_client,
             'vector_store': vector_store,

@@ -9,10 +9,11 @@ from typing import Dict, List, Any
 logger = logging.getLogger(__name__)
 
 class ToolRegistry:
-    def __init__(self, broker, worker, critic, vector_store, llm_client):
+    def __init__(self, broker, worker, critic, risk_manager, vector_store, llm_client):
         self.broker = broker
         self.worker = worker
         self.critic = critic
+        self.risk_manager = risk_manager
         self.vector_store = vector_store
         self.llm_client = llm_client
         self.tools = {}
@@ -22,6 +23,7 @@ class ToolRegistry:
         self._register_alpaca_tools()
         self._register_worker_tools()
         self._register_critic_tools()
+        self._register_risk_manager_tools()
         self._register_utility_tools()
 
     def _register_alpaca_tools(self):
@@ -75,6 +77,18 @@ class ToolRegistry:
                 'category': 'critic'
             }
 
+    def _register_risk_manager_tools(self):
+        risk_manager_tools = {
+            'check_trade_signal': self.risk_manager.check_trade_signal,
+            'assess_risk_with_llm': self.risk_manager.assess_risk_with_llm
+        }
+        for name, func in risk_manager_tools.items():
+            self.tools[f'risk.{name}'] = {
+                'function': func,
+                'description': self._get_risk_manager_tool_description(name),
+                'category': 'risk'
+            }
+
     def _register_utility_tools(self):
         utility_tools = {
             'load_persona': self.llm_client.load_persona,
@@ -125,6 +139,13 @@ class ToolRegistry:
             'conduct_post_mortem_autopsy': 'Conduct a DeepSeek-R1 Post-Mortem Autopsy on a losing or stopped-out trade.'
         }
         return descriptions.get(tool_name, f'Critic tool: {tool_name}')
+
+    def _get_risk_manager_tool_description(self, tool_name):
+        descriptions = {
+            'check_trade_signal': 'Check a trade signal against the trading rules (stop-loss, take-profit, position sizing, risk-reward ratio, shark activity, etc.).',
+            'assess_risk_with_llm': 'Use the LLM with the finance-investment-researcher persona to provide a detailed risk assessment of a trade signal.'
+        }
+        return descriptions.get(tool_name, f'Risk tool: {tool_name}')
 
     def _get_utility_tool_description(self, tool_name):
         descriptions = {

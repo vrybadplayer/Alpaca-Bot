@@ -12,6 +12,7 @@ from ollama_client import OllamaClient
 from utils import VectorStore
 from worker import GeneratorWorker
 from critic import CriticAuditor
+from risk_manager import RiskManager
 from tool_registry import ToolRegistry
 
 
@@ -57,7 +58,7 @@ class Container:
                     'primary': 'qwen2.5-coder:7b',
                     'temperature': 0.1
                 },
-                'critic_engine': {
+                'risk_manager_engine': {
                     'primary': 'qwen2.5-coder:7b',
                     'temperature': 0.1
                 }
@@ -99,7 +100,7 @@ class Container:
             vector_store = self.get_vector_store()
             
             self._singletons['generator_worker'] = GeneratorWorker({
-                'broker': worker_config['broker'],  # Fixed: use worker_config['broker']
+                'broker': worker_config['broker'],
                 'system': worker_config['system'],
                 'model_routing': worker_config['model_routing'],
                 'tickers': worker_config['tickers'],
@@ -111,7 +112,6 @@ class Container:
             worker.broker = alpaca_broker
             worker.vector_store = vector_store
             worker.llm_client = ollama_client
-            # position_tracker is already set in GeneratorWorker constructor
         return self._singletons['generator_worker']
     
     def get_critic_auditor(self) -> CriticAuditor:
@@ -123,7 +123,7 @@ class Container:
             vector_store = self.get_vector_store()
             
             self._singletons['critic_auditor'] = CriticAuditor({
-                'broker': worker_config['broker'],  # Use broker config from worker config
+                'broker': worker_config['broker'],
                 'system': worker_config['system'],
                 'model_routing': worker_config['model_routing'],
                 'tickers': worker_config['tickers'],
@@ -134,8 +134,29 @@ class Container:
             critic.broker = alpaca_broker
             critic.vector_store = vector_store
             critic.llm_client = ollama_client
-            # position_tracker is already set in CriticAuditor constructor
         return self._singletons['critic_auditor']
+    
+    def get_risk_manager(self) -> RiskManager:
+        """Get Risk Manager instance (singleton)."""
+        if 'risk_manager' not in self._singletons:
+            worker_config = self.get_worker_config()
+            alpaca_broker = self.get_alpaca_broker()
+            ollama_client = self.get_ollama_client()
+            vector_store = self.get_vector_store()
+            
+            self._singletons['risk_manager'] = RiskManager({
+                'broker': worker_config['broker'],
+                'system': worker_config['system'],
+                'model_routing': worker_config['model_routing'],
+                'tickers': worker_config['tickers'],
+                'lookback_days': worker_config.get('lookback_days', 30)
+            })
+            # Manually set the dependencies that RiskManager expects
+            risk_manager = self._singletons['risk_manager']
+            risk_manager.broker = alpaca_broker
+            risk_manager.vector_store = vector_store
+            risk_manager.llm_client = ollama_client
+        return self._singletons['risk_manager']
     
     def get_tool_registry(self) -> ToolRegistry:
         """Get Tool Registry instance (singleton)."""
@@ -143,6 +164,7 @@ class Container:
             alpaca_broker = self.get_alpaca_broker()
             worker = self.get_generator_worker()
             critic = self.get_critic_auditor()
+            risk_manager = self.get_risk_manager()
             vector_store = self.get_vector_store()
             ollama_client = self.get_ollama_client()
             
@@ -150,6 +172,7 @@ class Container:
                 broker=alpaca_broker,
                 worker=worker,
                 critic=critic,
+                risk_manager=risk_manager,
                 vector_store=vector_store,
                 llm_client=ollama_client
             )
