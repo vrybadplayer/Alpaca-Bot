@@ -13,7 +13,7 @@ env_path = os.path.join(os.path.dirname(__file__), '.env')
 load_dotenv(dotenv_path=env_path)
 
 # Import our modules
-from container import load_config_from_env, Container
+from Core.Setups.container import load_config_from_env, Container
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)

@@ -7,13 +7,13 @@ Manages the creation and wiring of all components.
 import os
 from typing import Dict, Any
 
-from alpaca_broker import AlpacaBroker
-from ollama_client import OllamaClient
-from utils import VectorStore
-from worker import GeneratorWorker
-from critic import CriticAuditor
-from risk_manager import RiskManager
-from tool_registry import ToolRegistry
+from Core.Alpaca.alpaca_broker import AlpacaBroker
+from Core.Setups.ollama_client import OllamaClient
+from Core.utils import VectorStore
+from Core.worker import GeneratorWorker
+from Core.critic import CriticAuditor
+from Core.Risk.risk_manager import RiskManager
+from Core.tool_registry import ToolRegistry
 
 
 class Container:

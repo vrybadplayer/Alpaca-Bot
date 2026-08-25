@@ -1,4 +1,4 @@
-import config
+import Core.Setups.config as config
 from alpaca.trading.client import TradingClient
 from alpaca.trading.requests import GetOrdersRequest
 from alpaca.trading.enums import OrderSide, QueryOrderStatus

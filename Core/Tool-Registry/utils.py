@@ -121,7 +121,7 @@ class VectorStore:
 
 # ==================== OLLAMA CLIENT ====================
 # Import the real Ollama client
-from ollama_client import OllamaClient
+from Core.Setups.ollama_client import OllamaClient
 
 # ==================== PORTFOLIO MANAGER (STUB) ====================
 class PortfolioManager:

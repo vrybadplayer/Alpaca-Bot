@@ -234,7 +234,7 @@ class AlpacaBroker:
             if resp.status_code == 200:
                 data = resp.json()
                 # Import here to avoid circular import
-                from utils import OrderContract, OrderAction
+                from Core.utils import OrderContract, OrderAction
                 return OrderContract(
                     order_id=data.get("id"),
                     ticker=data.get("symbol"),
@@ -248,5 +248,5 @@ class AlpacaBroker:
         except Exception as e:
             logger.error(f"Error checking order status {order_id}: {e}")
         # Return a default unknown contract
-        from utils import OrderContract, OrderAction
+        from Core.utils import OrderContract, OrderAction
         return OrderContract(order_id=order_id, ticker="UNKNOWN", action=OrderAction.BUY, quantity=1, source_component="unknown")

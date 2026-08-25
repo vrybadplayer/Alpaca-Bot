@@ -1,4 +1,4 @@
-import config
+import Core.Setups.config as config
 from alpaca.data.live import StockDataStream
 
 stream = StockDataStream(config.API, config.SECRET)

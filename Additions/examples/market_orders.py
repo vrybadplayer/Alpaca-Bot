@@ -1,4 +1,4 @@
-import config
+import Core.Setups.config as config
 from alpaca.trading.client import TradingClient
 from alpaca.trading.requests import LimitOrderRequest, MarketOrderRequest
 from alpaca.trading.enums import OrderSide, TimeInForce 

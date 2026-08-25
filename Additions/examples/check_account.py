@@ -1,4 +1,4 @@
-import config
+import Core.Setups.config as config
 from dotenv import load_dotenv
 from alpaca.trading.client import TradingClient
 

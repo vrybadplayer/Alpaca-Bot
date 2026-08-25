@@ -159,7 +159,7 @@ class ToolRegistry:
 
     def _place_order_wrapper(self, order):
         # Import here to avoid circular import
-        from alpaca_broker import OrderContract
+        from Core.Alpaca.alpaca_broker import OrderContract
         if not isinstance(order, OrderContract):
             # If it's a dict, convert to OrderContract (for backward compatibility)
             # In a real implementation, we might want to handle this differently
