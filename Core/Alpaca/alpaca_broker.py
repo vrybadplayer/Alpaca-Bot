@@ -9,6 +9,8 @@ from datetime import datetime, timezone
 from typing import Dict, List, Optional, Any
 import requests
 
+from Core.Tool_Registry.utils import OrderContract, OrderAction, OrderType
+
 logger = logging.getLogger(__name__)
 
 class AlpacaBroker:
@@ -161,7 +163,7 @@ class AlpacaBroker:
             "vwap": 205.0
         }]
 
-    def place_order(self, order: 'OrderContract') -> 'OrderContract':
+    def place_order(self, order: OrderContract) -> OrderContract:
         if not self.is_connected and not self.connect():
             order.status = 'rejected'
             order.notes = "Broker disconnected / invalid API keys"
@@ -228,13 +230,11 @@ class AlpacaBroker:
             logger.error(f"Failed to cancel order {order_id}: {e}")
             return False
 
-    def get_order_status(self, order_id: str) -> 'OrderContract':
+    def get_order_status(self, order_id: str) -> OrderContract:
         try:
             resp = self.session.get(f"{self.base_url}/v2/orders/{order_id}", timeout=6)
             if resp.status_code == 200:
                 data = resp.json()
-                # Import here to avoid circular import
-                from Core.utils import OrderContract, OrderAction
                 return OrderContract(
                     order_id=data.get("id"),
                     ticker=data.get("symbol"),
@@ -248,5 +248,4 @@ class AlpacaBroker:
         except Exception as e:
             logger.error(f"Error checking order status {order_id}: {e}")
         # Return a default unknown contract
-        from Core.utils import OrderContract, OrderAction
         return OrderContract(order_id=order_id, ticker="UNKNOWN", action=OrderAction.BUY, quantity=1, source_component="unknown")
