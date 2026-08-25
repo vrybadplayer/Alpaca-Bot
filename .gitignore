@@ -1,3 +1,10 @@
 /.env
 /.venv
 /__pycache__
+/nul
+/Core/__pycache__
+/Core/Alpaca/__pycache__
+/Core/Risk/__pycache__
+/Core/Setups/__pycache__
+/Core/Tool_Registry/__pycache__
+/Core/Worker_Critic/__pycache__

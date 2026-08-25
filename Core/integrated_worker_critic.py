@@ -5,11 +5,15 @@ This script uses dependency injection to wire all components together.
 """
 
 import os
+import sys
 import logging
 from dotenv import load_dotenv
 
-# Load environment variables from .env in the Alpaca-Bot root
-env_path = os.path.join(os.path.dirname(__file__), '.env')
+# Add the project root to the Python path
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+# Load environment variables from .env in the Alpaca-Bot root (project root)
+env_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), '.env')
 load_dotenv(dotenv_path=env_path)
 
 # Import our modules

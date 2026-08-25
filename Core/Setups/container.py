@@ -9,11 +9,11 @@ from typing import Dict, Any
 
 from Core.Alpaca.alpaca_broker import AlpacaBroker
 from Core.Setups.ollama_client import OllamaClient
-from Core.utils import VectorStore
-from Core.worker import GeneratorWorker
-from Core.critic import CriticAuditor
+from Core.Tool_Registry.utils import VectorStore
+from Core.Worker_Critic.worker import GeneratorWorker
+from Core.Worker_Critic.critic import CriticAuditor
 from Core.Risk.risk_manager import RiskManager
-from Core.tool_registry import ToolRegistry
+from Core.Tool_Registry.tool_registry import ToolRegistry
 
 
 class Container:
@@ -183,11 +183,11 @@ def load_config_from_env() -> Dict[str, Any]:
     """Load configuration from environment variables."""
     from dotenv import load_dotenv
     import os
-    
-    # Load .env file
-    env_path = os.path.join(os.path.dirname(__file__), '.env')
+
+    # Load .env file from the project root (two levels up from this file)
+    env_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), '.env')
     load_dotenv(dotenv_path=env_path)
-    
+
     # Return all relevant environment variables as config
     return {
         'ALPACA_API_KEY': os.getenv('ALPACA_API_KEY'),
