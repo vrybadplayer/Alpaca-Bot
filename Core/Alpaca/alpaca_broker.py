@@ -28,9 +28,14 @@ class AlpacaBroker:
         self.is_connected = False
         self.last_error = None
         self._setup_headers()
-
+        self._dummy = self._is_dummy_credentials()
+    def _is_dummy_credentials(self) -> bool:
+        """Check if credentials are dummy placeholders."""
+        return (self.api_key == 'PKDUMMY' and self.api_secret == 'SKDUMMY') or \
+               (self.api_key == 'PKDUMMY' and not self.api_secret) or \
+               (not self.api_key and self.api_secret == 'SKDUMMY')
     def _setup_headers(self):
-        if self.api_key and self.api_secret:
+        if self.api_key and self.api_secret and not self._is_dummy_credentials():
             self.session = requests.Session()
             self.session.headers.update({
                 "APCA-API-KEY-ID": self.api_key.strip(),
@@ -38,8 +43,18 @@ class AlpacaBroker:
                 "Content-Type": "application/json",
                 "User-Agent": "Autonomous-DualAgent-TradingBot/1.0"
             })
-
+        elif self._is_dummy_credentials():
+            # Create a dummy session for consistency
+            self.session = requests.Session()
+            self.session.headers.update({
+                "User-Agent": "Autonomous-DualAgent-TradingBot/1.0"
+            })
     def connect(self) -> bool:
+        if self._dummy:
+            self.is_connected = True
+            self.last_error = None
+            logger.info("Running in simulation mode with dummy credentials.")
+            return True
         if not self.api_key or not self.api_secret:
             self.last_error = "Alpaca API credentials missing."
             logger.warning(self.last_error)
@@ -67,8 +82,17 @@ class AlpacaBroker:
         return True
 
     def get_account_info(self) -> Dict[str, Any]:
-        if not self.is_connected and not self.connect():
-            return {"cash_balance": 100000.0, "total_equity": 100000.0, "buying_power": 100000.0, "status": "DISCONNECTED", "currency": "USD"}
+        if self._dummy:
+            return {
+                "account_number": "DUMMY123",
+                "status": "ACTIVE",
+                "currency": "USD",
+                "cash_balance": 100000.0,
+                "total_equity": 100000.0,
+                "buying_power": 100000.0,
+                "daytrade_count": 0,
+                "is_paper": True
+            }
         try:
             resp = self.session.get(f"{self.base_url}/v2/account", timeout=8)
             resp.raise_for_status()
@@ -89,7 +113,7 @@ class AlpacaBroker:
             return {"error": self.last_error}
 
     def get_positions(self) -> List[Dict[str, Any]]:
-        if not self.is_connected and not self.connect():
+        if self._dummy:
             return []
         try:
             resp = self.session.get(f"{self.base_url}/v2/positions", timeout=8)

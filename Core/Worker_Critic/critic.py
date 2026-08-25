@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+
 """
 Critic Auditor (System 2) implementation.
 """
@@ -6,9 +7,11 @@ Critic Auditor (System 2) implementation.
 import logging
 from datetime import datetime, timezone
 from typing import Dict, List, Optional, Any
+from pathlib import Path
 
 from Core.Alpaca.alpaca_broker import AlpacaBroker
 from Core.Tool_Registry.utils import VectorStore, OllamaClient, PortfolioManager, OrderContract, OrderAction, OrderType, TradeSignal
+from Core.Contexts.Reviews.review_schema import PnLReview
 
 logger = logging.getLogger(__name__)
 
@@ -25,6 +28,7 @@ class CriticAuditor:
         self.critic_model = config.get('model_routing', {}).get('critic_engine', {}).get('primary', 'deepseek-r1:14b')
         self.tickers = config.get('tickers', ['NVDA'])
         self.lookback_days = config.get('lookback_days', 30)
+        self._repo_root = Path(__file__).resolve().parents[2]  # repo root path for locating reviews
         logger.info(f"Critic Auditor initialized (Model: {self.critic_model})")
 
     def analyze_market_psychology(self, ticker: str = None, lookback_days: int = None, data_sources: List[str] = None) -> Dict[str, Any]:
@@ -117,6 +121,47 @@ class CriticAuditor:
             "notes": "Stub validation: execution adhered closely to signal",
             "status": "success"
         }
+
+    def load_recent_pnl_reviews(self, limit: int = 5):
+        """Load recent PnL review JSON files and validate them."""
+        import json
+        from pathlib import Path
+        review_dir = self._repo_root / "Core" / "Contexts" / "Reviews"
+        if not review_dir.is_dir():
+            logger.warning("PnL review directory not found: %s", review_dir)
+            return []
+        json_files = sorted(review_dir.glob("*.json"), key=lambda p: p.stat().st_mtime, reverse=True)
+        recent_files = json_files[:limit]
+        validated_reviews = []
+        for f in recent_files:
+            try:
+                with open(f, "r", encoding="utf-8") as fp:
+                    data = json.load(fp)
+                review = PnLReview(**data)
+                validated_reviews.append(review.dict())
+            except Exception as e:
+                logger.warning("Failed to validate review %s: %s", f, e)
+        return validated_reviews
+
+    def receive_pnl_review(self, review: dict):
+        """Store a PnL review for later use by the critic."""
+        logger.info(
+            f"PnL Review received: review_id={review.get('review_id')}, "
+            f"ticker={review.get('ticker')}, realized_pnl={review.get('realized_pnl')}"
+        )
+
+    def store_review(self, review: dict):
+        """Validate and store a PnL review for later analysis."""
+        try:
+            # Validate against PnLReview schema
+            validated = PnLReview(**review)
+            # Append to history, keep bounded
+            self.pnl_history.append(validated.dict())
+            if len(self.pnl_history) > 100:
+                self.pnl_history.pop(0)
+            logger.info(f"PnL Review stored: review_id={review.get('review_id')}")
+        except Exception as e:
+            logger.warning(f"Failed to store PnL review: {e}")
 
     def query_knowledge_base(self, query: str, n_results: int = 5, filter_dict: Dict[str, Any] = None) -> Dict[str, Any]:
         return {
