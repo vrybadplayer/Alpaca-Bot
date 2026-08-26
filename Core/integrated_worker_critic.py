@@ -179,29 +179,44 @@ def main():
         if result["status"] == "success" and result["result"]:
             signal = result["result"]
             print(f"   ✓ Generated Signal: {signal.action} {signal.quantity} NVDA @ ${signal.target_price:.2f} (Conf: {signal.confidence:.2f})")
+            # --------------------------------------------------------------
+            # 6. Integrate PnL Review processing (moved up)
+            # --------------------------------------------------------------
+            print("\n12. PnL Review processing...")
+            recent_reviews = load_recent_pnl_reviews(limit=3)
+            if recent_reviews:
+                print(f"   ✓ Loaded {len(recent_reviews)} recent PnL reviews")
+                # Feed each review into the critic for learning
+                for i, rev in enumerate(recent_reviews, 1):
+                    print(f"     [{i}] review_id={rev['review_id']}  ticker={rev['ticker']}  pnl={rev['realized_pnl']}")
+                    critic.receive_pnl_review(rev)
+            else:
+                print("   ℹ No PnL reviews found to process")
+                # Example hook: critic.receive_pnl_review(rev)  <-- future extension
+
+            # Get current price for critic audit
+            quote_result = tool_registry.execute_tool("alpaca.get_latest_quote", "NVDA")
+            if quote_result["status"] == "success" and quote_result["result"]:
+                quote = quote_result["result"]
+                current_price = (quote.get('ask_price', 0) + quote.get('bid_price', 0)) / 2
+                if current_price == 0:
+                    # fallback to last price or something
+                    current_price = quote.get('ask_price', quote.get('bid_price', 0))
+            else:
+                current_price = signal.target_price  # fallback
+
+            # Critic audits the signal with loaded reviews
+            audit_result = critic.audit_proposed_signal(signal, current_price)
+            if audit_result["status"] == "success":
+                print(f"   ✓ Critic audit: {audit_result.get('reason')}")
+                if not audit_result["approved"]:
+                    print("   ℹ Signal rejected by critic")
+                    signal = None
+            else:
+                print(f"   ⚠ Critic audit failed: {audit_result.get('error')}")
+                signal = None
         else:
             print("   ℹ No signal generated (holding)")
-
-        # --------------------------------------------------------------
-        # 6. Integrate PnL Review processing
-        # --------------------------------------------------------------
-        print("\n12. PnL Review processing...")
-        recent_reviews = load_recent_pnl_reviews(limit=3)
-        if recent_reviews:
-            print(f"   ✓ Loaded {len(recent_reviews)} recent PnL reviews")
-            # Feed each review into the critic for learning
-            for i, rev in enumerate(recent_reviews, 1):
-                print(f"     [{i}] review_id={rev['review_id']}  ticker={rev['ticker']}  pnl={rev['realized_pnl']}")
-                critic.receive_pnl_review(rev)
-        else:
-            print("   ℹ No PnL reviews found to process")
-            # Example hook: critic.receive_pnl_review(rev)  <-- future extension
-
-        # --------------------------------------------------------------
-        # 7. Risk checks (if we have a signal)
-        # --------------------------------------------------------------
-        # (Existing risk check logic follows – unchanged)
-        # ...
 
         # --------------------------------------------------------------
         # 8. Final summary
