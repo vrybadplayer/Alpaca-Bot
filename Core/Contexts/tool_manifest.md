@@ -23,12 +23,12 @@ This manifest describes the available tools in the Worker-Critic system for use 
 - `worker.generate_signal`: Generate a trade signal using the Researcher Persona.
 
 ### Critic Tools (7):
-- `critic.analyze_market_psychology`: Analyze market sentiment, fear/greed indices, and behavioral patterns using DeepSeek-R1 and ChromaDB.
+- `critic.analyze_market_psychology`: Analyze market sentiment, fear/greed indices, and behavioral patterns using DeepSeek-R1.
 - `critic.audit_proposed_signal`: Deep Chain-of-Thought risk audit of a proposed trade signal from Worker Agent.
 - `critic.detect_market_regime`: Identify the current macro market regime based on key indicators.
 - `critic.analyze_risk_scenarios`: Performs stress testing and scenario analysis on a proposed trade or portfolio.
 - `critic.validate_trade_signal`: Validates an executed trade against the original signal and checks for slippage, fees, and adherence.
-- `critic.query_knowledge_base`: Queries the embedded ChromaDB vector store for relevant market psychology, regime indicators, or historical cases.
+- `critic.query_knowledge_base`: Queries historical cases and market knowledge for relevant indicators.
 - `critic.conduct_post_mortem_autopsy`: Conduct a DeepSeek-R1 Post-Mortem Autopsy on a losing or stopped-out trade.
 
 ### Utility Tools (5):

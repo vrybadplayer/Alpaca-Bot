@@ -181,6 +181,5 @@ class CriticAuditor:
             "lesson_learned": "Stub lesson learned",
             "failure_tag": "STUB_FAILURE",
             "timestamp": datetime.now(timezone.utc).isoformat(),
-            "chroma_embedded": False,
             "status": "success"
         }

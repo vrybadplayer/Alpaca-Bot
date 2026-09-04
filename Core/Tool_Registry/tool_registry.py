@@ -130,12 +130,12 @@ class ToolRegistry:
 
     def _get_critic_tool_description(self, tool_name):
         descriptions = {
-            'analyze_market_psychology': 'Analyze market sentiment, fear/greed indices, and behavioral patterns using DeepSeek-R1 and ChromaDB.',
+            'analyze_market_psychology': 'Analyze market sentiment, fear/greed indices, and behavioral patterns using DeepSeek-R1.',
             'audit_proposed_signal': 'Deep Chain-of-Thought risk audit of a proposed trade signal from Worker Agent.',
             'detect_market_regime': 'Identify the current macro market regime based on key indicators.',
             'analyze_risk_scenarios': 'Performs stress testing and scenario analysis on a proposed trade or portfolio.',
             'validate_trade_signal': 'Validates an executed trade against the original signal and checks for slippage, fees, and adherence.',
-            'query_knowledge_base': 'Queries the embedded ChromaDB vector store for relevant market psychology, regime indicators, or historical cases.',
+            'query_knowledge_base': 'Queries historical cases and market knowledge for relevant indicators.',
             'conduct_post_mortem_autopsy': 'Conduct a DeepSeek-R1 Post-Mortem Autopsy on a losing or stopped-out trade.'
         }
         return descriptions.get(tool_name, f'Critic tool: {tool_name}')

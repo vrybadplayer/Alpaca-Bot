@@ -81,13 +81,9 @@ class PortfolioState:
 
 # ==================== VECTOR STORE (STUB) ====================
 class VectorStore:
-    def __init__(self, persist_directory: str = "./database/data/chroma_db", collection_name: str = "trading_memory"):
+    def __init__(self, persist_directory: str = None, collection_name: str = None):
         self.persist_directory = persist_directory
         self.collection_name = collection_name
-        # In a real implementation, we would initialize ChromaDB here.
-        # For now, we use a stub and log a warning.
-        import logging
-        logging.warning("VectorStore stub: ChromaDB not available. Using mock vector store.")
 
     def is_available(self) -> bool:
         return False
