@@ -67,7 +67,6 @@ def main():
         risk_manager = final_context.get("risk_manager")
         tool_registry = final_context.get("tool_registry")
         llm_client = final_context.get("llm_client")
-        vector_store = final_context.get("vector_store")
         container = final_context.get("container")
         
         # Print final summary
@@ -99,7 +98,6 @@ def main():
             "risk_manager": risk_manager,
             "tool_registry": tool_registry,
             "llm_client": llm_client,
-            "vector_store": vector_store,
             "container": container,
             "orchestrator": orchestrator,  # Also return the orchestrator for inspection
             "final_context": final_context,  # And the full context

@@ -33,7 +33,7 @@ class ToolRegistry:
             'get_latest_quote': self.broker.get_latest_quote,
             'scan_shark_activity': self.broker.scan_shark_activity,
             'get_market_data': self.broker.get_market_data,
-            'place_order': self._place_order_wrapper,
+            'place_order': self.broker.place_order,
             'cancel_order': self.broker.cancel_order,
             'get_order_status': self.broker.get_order_status
         }
@@ -90,13 +90,20 @@ class ToolRegistry:
             }
 
     def _register_utility_tools(self):
-        utility_tools = {
-            'load_persona': self.llm_client.load_persona,
-            'load_manifest': self.llm_client.load_manifest,
-            'chat_with_ollama': self.llm_client.chat,
-            'vector_store_query': self.vector_store.query_knowledge,
-            'vector_store_add_text': self.vector_store.add_text
-        }
+        utility_tools = {}
+        if hasattr(self.llm_client, 'load_persona'):
+            utility_tools['load_persona'] = self.llm_client.load_persona
+        if hasattr(self.llm_client, 'load_manifest'):
+            utility_tools['load_manifest'] = self.llm_client.load_manifest
+        if hasattr(self.llm_client, 'chat'):
+            utility_tools['chat_with_ollama'] = self.llm_client.chat
+        elif hasattr(self.llm_client, 'generate_response'):
+            utility_tools['chat_with_ollama'] = self.llm_client.generate_response
+
+        if self.vector_store is not None:
+            utility_tools['vector_store_query'] = self.vector_store.query_knowledge
+            utility_tools['vector_store_add_text'] = self.vector_store.add_text
+
         for name, func in utility_tools.items():
             self.tools[f'utility.{name}'] = {
                 'function': func,
@@ -156,15 +163,6 @@ class ToolRegistry:
             'vector_store_add_text': 'Add a text document to the vector store.'
         }
         return descriptions.get(tool_name, f'Utility tool: {tool_name}')
-
-    def _place_order_wrapper(self, order):
-        # Import here to avoid circular import
-        from Core.Alpaca.alpaca_broker import OrderContract
-        if not isinstance(order, OrderContract):
-            # If it's a dict, convert to OrderContract (for backward compatibility)
-            # In a real implementation, we might want to handle this differently
-            raise ValueError("Expected OrderContract object")
-        return self.broker.place_order(order)
 
     def get_tool(self, name):
         return self.tools.get(name)

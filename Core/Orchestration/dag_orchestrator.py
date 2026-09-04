@@ -245,7 +245,7 @@ def create_default_dag() -> DAGOrchestrator:
         return {"container": container}
 
     def initialize_components(context: Dict[str, Any]) -> Dict[str, Any]:
-        """Initialize key components: broker, LLM client, vector store, worker, critic, risk manager."""
+        """Initialize key components: broker, LLM client, worker, critic, risk manager."""
         container = context["container"]
         broker = container.get_alpaca_broker()
         if not broker.connect():
@@ -253,7 +253,6 @@ def create_default_dag() -> DAGOrchestrator:
         account_info = broker.get_account_info()
 
         llm_client = container.get_ollama_client()
-        vector_store = container.get_vector_store()
         worker = container.get_generator_worker()
         critic = container.get_critic_auditor()
         risk_manager = container.get_risk_manager()
@@ -262,7 +261,6 @@ def create_default_dag() -> DAGOrchestrator:
             "broker": broker,
             "account_info": account_info,
             "llm_client": llm_client,
-            "vector_store": vector_store,
             "worker": worker,
             "critic": critic,
             "risk_manager": risk_manager,
@@ -518,7 +516,6 @@ def create_default_dag() -> DAGOrchestrator:
             "broker",
             "account_info",
             "llm_client",
-            "vector_store",
             "worker",
             "critic",
             "risk_manager",

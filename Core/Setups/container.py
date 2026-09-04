@@ -9,7 +9,6 @@ from typing import Dict, Any
 
 from Core.Alpaca.alpaca_broker import AlpacaBroker
 from Core.Setups.ollama_client import OllamaClient
-from Core.Tool_Registry.utils import VectorStore
 from Core.Worker_Critic.worker import GeneratorWorker
 from Core.Worker_Critic.critic import CriticAuditor
 from Core.Risk.risk_manager import RiskManager
@@ -85,19 +84,12 @@ class Container:
             )
         return self._singletons['ollama_client']
     
-    def get_vector_store(self) -> VectorStore:
-        """Get Vector store instance (singleton)."""
-        if 'vector_store' not in self._singletons:
-            self._singletons['vector_store'] = VectorStore()
-        return self._singletons['vector_store']
-    
     def get_generator_worker(self) -> GeneratorWorker:
         """Get Generator Worker instance (singleton)."""
         if 'generator_worker' not in self._singletons:
             worker_config = self.get_worker_config()
             alpaca_broker = self.get_alpaca_broker()
             ollama_client = self.get_ollama_client()
-            vector_store = self.get_vector_store()
             
             self._singletons['generator_worker'] = GeneratorWorker({
                 'broker': worker_config['broker'],
@@ -110,7 +102,6 @@ class Container:
             # Manually set the dependencies that GeneratorWorker expects
             worker = self._singletons['generator_worker']
             worker.broker = alpaca_broker
-            worker.vector_store = vector_store
             worker.llm_client = ollama_client
         return self._singletons['generator_worker']
     
@@ -120,7 +111,6 @@ class Container:
             worker_config = self.get_worker_config()
             alpaca_broker = self.get_alpaca_broker()
             ollama_client = self.get_ollama_client()
-            vector_store = self.get_vector_store()
             
             self._singletons['critic_auditor'] = CriticAuditor({
                 'broker': worker_config['broker'],
@@ -132,7 +122,6 @@ class Container:
             # Manually set the dependencies that CriticAuditor expects
             critic = self._singletons['critic_auditor']
             critic.broker = alpaca_broker
-            critic.vector_store = vector_store
             critic.llm_client = ollama_client
         return self._singletons['critic_auditor']
     
@@ -142,7 +131,6 @@ class Container:
             worker_config = self.get_worker_config()
             alpaca_broker = self.get_alpaca_broker()
             ollama_client = self.get_ollama_client()
-            vector_store = self.get_vector_store()
             
             self._singletons['risk_manager'] = RiskManager({
                 'broker': worker_config['broker'],
@@ -154,7 +142,6 @@ class Container:
             # Manually set the dependencies that RiskManager expects
             risk_manager = self._singletons['risk_manager']
             risk_manager.broker = alpaca_broker
-            risk_manager.vector_store = vector_store
             risk_manager.llm_client = ollama_client
         return self._singletons['risk_manager']
     
@@ -165,7 +152,6 @@ class Container:
             worker = self.get_generator_worker()
             critic = self.get_critic_auditor()
             risk_manager = self.get_risk_manager()
-            vector_store = self.get_vector_store()
             ollama_client = self.get_ollama_client()
             
             self._singletons['tool_registry'] = ToolRegistry(
@@ -173,7 +159,7 @@ class Container:
                 worker=worker,
                 critic=critic,
                 risk_manager=risk_manager,
-                vector_store=vector_store,
+                vector_store=None,
                 llm_client=ollama_client
             )
         return self._singletons['tool_registry']
