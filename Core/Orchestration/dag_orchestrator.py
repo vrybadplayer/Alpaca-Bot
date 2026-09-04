@@ -426,19 +426,24 @@ def create_default_dag() -> DAGOrchestrator:
             source_component="orchestrator.risk_check",
         )
 
-        # The risk manager's check_trade_signal expects an OrderContract and returns a tuple (bool, str)
-        # But we don't have that method exposed; we have the tool. Let's use the tool.
         tool_registry = context["tool_registry"]
-        result = tool_registry.execute_tool("worker.check_trade_risk", contract)
-        # Note: The worker.check_trade_risk tool expects an OrderContract dict? We'll need to check.
-        # For now, we'll assume it works and return a simple pass/fail.
-        # In a real implementation, we would adjust based on the actual tool signature.
-        if result["status"] == "success" and result["result"]:
-            passed = result["result"]  # Assuming the tool returns a boolean or a dict with a 'passed' key
-            logger.info(f"Risk check passed: {passed}")
-            return {"risk_check_passed": bool(passed)}
+        action_str = "BUY" if str(signal.action).upper() in ["BUY", "ORDERACTION.BUY"] else "SELL"
+        result = tool_registry.execute_tool(
+            "worker.check_trade_risk",
+            signal.ticker,
+            action_str,
+            signal.quantity,
+            signal.target_price
+        )
+
+        if result.get("status") == "success" and isinstance(result.get("result"), dict):
+            res_dict = result["result"]
+            passed = res_dict.get("approved", False)
+            reason = res_dict.get("reason", "")
+            logger.info(f"Risk check result: approved={passed}, reason={reason}")
+            return {"risk_check_passed": passed, "risk_details": res_dict}
         else:
-            logger.warning("Risk check failed or returned unexpected result")
+            logger.warning(f"Risk check failed or returned unexpected result: {result.get('error', result)}")
             return {"risk_check_passed": False}
 
     def place_order(context: Dict[str, Any]) -> Dict[str, Any]:

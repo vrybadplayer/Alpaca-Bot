@@ -51,10 +51,11 @@ class CriticAuditor:
             persona_content = self.llm_client.load_persona("critic")
             
             # Create a prompt for signal audit
+            action_str = getattr(signal.action, 'value', signal.action)
             messages = [
                 {
                     "role": "user",
-                    "content": f"Audit this trade signal: {signal.action.value} {signal.quantity} {signal.ticker} @ target ${signal.target_price:.2f}, stop ${signal.stop_loss:.2f}, profit ${signal.take_profit:.2f}, confidence {signal.confidence:.2f}. Current price: ${current_price:.2f}. Provide approval decision, any violations, adjusted quantity, and reasoning."
+                    "content": f"Audit this trade signal: {action_str} {signal.quantity} {signal.ticker} @ target ${signal.target_price:.2f}, stop ${signal.stop_loss:.2f}, profit ${signal.take_profit:.2f}, confidence {signal.confidence:.2f}. Current price: ${current_price:.2f}. Provide approval decision, any violations, adjusted quantity, and reasoning."
                 }
             ]
             
